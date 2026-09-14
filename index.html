@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#102d27">
+<title>LandlordHub Mobile</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+<header class="top"><div><div class="brand">Landlord<span>Hub</span></div><div class="eyebrow">MY RENTAL BUSINESS</div></div><button id="addBtn" class="add">＋</button></header>
+<main id="content"></main>
+<nav class="bottom">
+<button class="tab active" data-view="dashboard">⌂<small>Home</small></button>
+<button class="tab" data-view="properties">▦<small>Properties</small></button>
+<button class="tab" data-view="tenants">♙<small>Tenants</small></button>
+<button class="tab" data-view="payments">₵<small>Payments</small></button>
+</nav>
+</div>
+<div class="sheet hidden" id="modal"><div class="sheet-card"><button class="close" id="close">×</button><h2>Add tenant</h2><p>Enter a tenant to test the system.</p>
+<form id="form"><label>Name<input id="name" required placeholder="Tenant name"></label><label>Unit<input id="unit" required placeholder="House A — Room 1"></label><label>Monthly rent<input id="rent" type="number" required placeholder="1200"></label><label>Due day<input id="due" type="number" min="1" max="31" value="1"></label><button class="save">Save tenant</button></form></div></div>
+<script src="app.js"></script>
+</body></html>
