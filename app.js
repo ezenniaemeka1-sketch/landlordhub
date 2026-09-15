@@ -61,7 +61,7 @@ function home(){
   </div>`;
 }
 function tenantRow(t){
-  return `<div class="tenant-row"><div><div class="name">${esc(t.name)}</div><div class="sub">${esc(prop(t.propertyId)?.name||"No property")} — ${esc(t.unit)} · ${money(t.rent)}</div></div><span class="badge ${t.status==="Overdue"?"overdue":""}">${esc(t.status)}</span></div>`;
+  return `<button class="tenant-row tenant-click" onclick="openTenantProfile('${t.id}')"><div><div class="name">${esc(t.name)}</div><div class="sub">${esc(prop(t.propertyId)?.name||"No property")} — ${esc(t.unit)} · ${money(t.rent)}</div></div><span class="badge ${t.status==="Overdue"?"overdue":""}">${esc(t.status)}</span></button>`;
 }
 function propertyMini(p){
   const ts=db.tenants.filter(t=>t.propertyId===p.id);
@@ -98,6 +98,35 @@ function payments(){
   <div class="section"><div class="section-head"><h2 class="section-title">Recent payments</h2><button class="primary" onclick="openPaymentForm()">+ Record</button></div>
   <div class="card">${db.payments.length?db.payments.slice().reverse().map(p=>`<div class="payment-row"><div><div class="name">${esc(tenant(p.tenantId)?.name||"Unknown tenant")}</div><div class="sub">${esc(p.date)} · ${esc(p.method)}</div></div><strong>${money(p.amount)}</strong></div>`).join(""):`<div class="empty">No payments recorded.</div>`}</div></div>`;
 }
+
+function openTenantProfile(id){
+  const t=tenant(id);
+  if(!t){return}
+  const p=prop(t.propertyId);
+  const history=db.payments.filter(x=>x.tenantId===id).slice().reverse();
+  const paid=history.reduce((s,x)=>s+Number(x.amount||0),0);
+  showModal(`<div class="sheet profile-sheet">
+    <div class="sheet-head"><div><div class="profile-kicker">TENANT PROFILE</div><h2>${esc(t.name)}</h2></div><button class="close" onclick="closeModal()">×</button></div>
+    <div class="profile-hero">
+      <div class="profile-avatar">${esc((t.name||"?").trim().charAt(0).toUpperCase())}</div>
+      <div><div class="profile-name">${esc(t.name)}</div><div class="sub">${esc(p?.name||"No property")} · ${esc(t.unit)}</div></div>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-stat"><span>Monthly rent</span><b>${money(t.rent)}</b></div>
+      <div class="profile-stat"><span>Due day</span><b>${esc(t.due)}th</b></div>
+      <div class="profile-stat"><span>Status</span><b>${esc(t.status)}</b></div>
+      <div class="profile-stat"><span>Recorded paid</span><b>${money(paid)}</b></div>
+    </div>
+    <div class="profile-actions">
+      <button class="secondary" onclick="closeModal();openTenantForm('${t.id}')">Edit tenant</button>
+      <button class="primary" onclick="closeModal();openPaymentForm('${t.id}')">+ Record payment</button>
+    </div>
+    <div class="section"><div class="section-head"><h3 class="section-title">Payment history</h3></div>
+      <div class="card profile-history">${history.length?history.map(x=>`<div class="payment-row"><div><div class="name">${money(x.amount)}</div><div class="sub">${esc(x.date)} · ${esc(x.method)}</div></div><span class="badge">Recorded</span></div>`).join(""):`<div class="empty">No payments recorded for this tenant yet.</div>`}</div>
+    </div>
+  </div>`);
+}
+
 function openTenantForm(id){
   const existing=id?tenant(id):null;
   const options=db.properties.map(p=>`<option value="${p.id}" ${existing?.propertyId===p.id?"selected":""}>${esc(p.name)}</option>`).join("");
@@ -134,9 +163,9 @@ function saveProperty(e,id){
   if(id) Object.assign(prop(id),data); else db.properties.push({id:"p"+Date.now(),...data});
   save();closeModal();render();
 }
-function openPaymentForm(){
+function openPaymentForm(preselectedId){
   if(!db.tenants.length){alert("Add a tenant first.");return}
-  const options=db.tenants.map(t=>`<option value="${t.id}">${esc(t.name)} — ${esc(t.unit)}</option>`).join("");
+  const options=db.tenants.map(t=>`<option value="${t.id}" ${preselectedId===t.id?"selected":""}>${esc(t.name)} — ${esc(t.unit)}</option>`).join("");
   showModal(`<div class="sheet"><div class="sheet-head"><h2>Record payment</h2><button class="close" onclick="closeModal()">×</button></div>
   <form class="form" onsubmit="savePayment(event)">
   <label>Tenant<select name="tenantId">${options}</select></label>
