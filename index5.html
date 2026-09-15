@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#102d27">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>LandlordHub V5</title>
+<link rel="stylesheet" href="style5.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand-block">
+    <div class="brand"><strong>Landlord</strong>Hub</div>
+    <div class="eyebrow">MY RENTAL BUSINESS</div>
+  </div>
+  <button class="icon-btn" id="quickAdd" aria-label="Add tenant">+</button>
+</header>
+
+<main id="app" class="app"></main>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+  <button data-view="home" class="nav-item active"><span>⌂</span><small>Home</small></button>
+  <button data-view="properties" class="nav-item"><span>▦</span><small>Properties</small></button>
+  <button data-view="tenants" class="nav-item"><span>♙</span><small>Tenants</small></button>
+  <button data-view="payments" class="nav-item"><span>₵</span><small>Payments</small></button>
+</nav>
+
+<div id="modal" class="modal hidden"></div>
+<script src="app5.js"></script>
+</body>
+</html>
