@@ -1,13 +1,18 @@
-/* LANDLORDHUB V9
-   Fix: occupied unit/property rent follows the tenant's actual rent.
-   Vacant units keep their existing/default rent.
+/* LANDLORDHUB V9 — RENT CORRECTION
+   This version keeps the working V8 application and corrects the
+   property/unit rent values using the tenant records already saved
+   on the device.
+
+   Rule:
+   - Occupied unit: tenant.rent is the source of truth.
+   - Vacant unit: keep the unit's existing rent.
 */
 (function () {
   const APP8 = 'app8.js';
   const KEY = 'landlordhub_v8';
-  const V9_APPLIED = 'landlordhub_v9_applied';
+  const APPLIED = 'landlordhub_v9_sync';
 
-  function syncSavedData() {
+  function synchronizeSavedDatabase() {
     try {
       const raw = localStorage.getItem(KEY);
       if (!raw) return false;
@@ -21,15 +26,28 @@
 
       data.properties.forEach(function (p) {
         (p.units || []).forEach(function (u) {
-          const t = data.tenants.find(function (tenant) {
-            return tenant.unitId === u.id;
-          });
+          let t = null;
+
+          // First use the unit's tenantId — this is how app8 links
+          // an occupied unit to its tenant.
+          if (u.tenantId) {
+            t = data.tenants.find(function (tenant) {
+              return tenant.id === u.tenantId;
+            });
+          }
+
+          // Fallback to the tenant's unitId.
+          if (!t) {
+            t = data.tenants.find(function (tenant) {
+              return tenant.unitId === u.id;
+            });
+          }
 
           if (t) {
-            const rent = Number(t.rent || 0);
+            const actualRent = Number(t.rent || 0);
 
-            if (Number(u.rent || 0) !== rent || u.tenantId !== t.id) {
-              u.rent = rent;
+            if (Number(u.rent || 0) !== actualRent || u.tenantId !== t.id) {
+              u.rent = actualRent;
               u.tenantId = t.id;
               changed = true;
             }
@@ -42,64 +60,72 @@
       }
 
       return changed;
-    } catch (err) {
-      console.error('LandlordHub V9 sync error:', err);
+    } catch (error) {
+      console.error('LandlordHub V9 sync error:', error);
       return false;
     }
   }
 
-  function loadApp8() {
-    const s = document.createElement('script');
-    s.src = APP8;
+  function start() {
+    const script = document.createElement('script');
+    script.src = APP8 + '?v=9';
 
-    s.onload = function () {
-      const changed = syncSavedData();
+    script.onload = function () {
+      const changed = synchronizeSavedDatabase();
 
-      if (changed && localStorage.getItem(V9_APPLIED) !== '1') {
-        localStorage.setItem(V9_APPLIED, '1');
+      /*
+        app8 has already rendered once. If we changed the saved data,
+        reload once so app8 loads the corrected values and its own
+        propertyCard function displays them.
+      */
+      if (changed && localStorage.getItem(APPLIED) !== '1') {
+        localStorage.setItem(APPLIED, '1');
         window.location.reload();
         return;
       }
 
-      if (localStorage.getItem(V9_APPLIED) === '1') {
-        localStorage.removeItem(V9_APPLIED);
+      if (localStorage.getItem(APPLIED) === '1') {
+        localStorage.removeItem(APPLIED);
       }
 
-      installTenantSync();
-      console.log('LandlordHub V9 loaded.');
+      installTenantSaveSync();
+      console.log('LandlordHub V9 active — tenant rent is the source of truth.');
     };
 
-    s.onerror = function () {
-      console.error('LandlordHub V9: could not load app8.js');
+    script.onerror = function () {
+      console.error('LandlordHub V9: app8.js could not be loaded.');
     };
 
-    document.head.appendChild(s);
+    document.head.appendChild(script);
   }
 
-  function installTenantSync() {
+  function installTenantSaveSync() {
     if (typeof window.saveTenant !== 'function') return;
     if (window.saveTenant.__v9Wrapped) return;
 
     const originalSaveTenant = window.saveTenant;
 
-    const wrappedSaveTenant = function () {
+    window.saveTenant = function () {
       const result = originalSaveTenant.apply(this, arguments);
 
+      /*
+        app8 saves immediately inside sync(). Wait until its save has
+        completed, then synchronize the unit rent and reload once.
+      */
       setTimeout(function () {
-        const changed = syncSavedData();
+        const changed = synchronizeSavedDatabase();
 
-        if (changed && localStorage.getItem(V9_APPLIED) !== '1') {
-          localStorage.setItem(V9_APPLIED, '1');
+        if (changed && localStorage.getItem(APPLIED) !== '1') {
+          localStorage.setItem(APPLIED, '1');
           window.location.reload();
         }
-      }, 0);
+      }, 50);
 
       return result;
     };
 
-    wrappedSaveTenant.__v9Wrapped = true;
-    window.saveTenant = wrappedSaveTenant;
+    window.saveTenant.__v9Wrapped = true;
   }
 
-  loadApp8();
+  start();
 })();

@@ -1,35 +1,4 @@
-/* LANDLORDHUB V9 — compatibility styles */
-.property-card {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.property-card .property-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.property-card .unit-list {
-  margin-top: 12px;
-}
-
-.property-card .unit-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.property-card .unit-row > div {
-  min-width: 0;
-}
-
-.property-card .unit-row span {
-  display: block;
-}
-
-.property-card .unit-row strong {
-  white-space: nowrap;
-}
+/* LANDLORDHUB V9
+   Uses the existing V8 visual system. This file is intentionally
+   minimal so V9 does not disturb the proven interface.
+*/
